@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Music Player</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(45deg, #8a2be2, #4b0082);
+    }
+    
+    .player-container {
+      width: 350px;
+      padding: 25px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+    
+    .player-container:hover {
+      transform: translateY(-5px);
+    }
+    
+    .album-cover {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .album-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .vinyl-disc {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 150px;
+      height: 150px;
+      background: #000;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .vinyl-disc::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      background: #888;
+      border-radius: 50%;
+    }
+    
+    .vinyl-disc::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      background: #000;
+      border-radius: 50%;
+    }
+    
+    .album-cover:hover .vinyl-disc {
+      opacity: 0.8;
+      animation: rotate 5s linear infinite;
+    }
+    
+    @keyframes rotate {
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+    
+    .song-info {
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+    }
+    
+    .song-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .artist-name {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .progress-container {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      width: 70%;
+      height: 100%;
+      background: linear-gradient(90deg, #f5a623, #ff6b6b);
+      border-radius: 10px;
+      transition: width 0.2s ease;
+    }
+    
+    .time-info {
+      display: flex;
+      justify-content: space-between;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(1.1);
+    }
+    
+    .play-btn {
+      width: 60px;
+      height: 60px;
+      background: white;
+      color: #8a2be2;
+    }
+    
+    .play-btn:hover {
+      background: white;
+    }
+    
+    .volume-container {
+      display: flex;
+      align-items: center;
+      margin-top: 20px;
+      color: white;
+    }
+    
+    .volume-icon {
+      margin-right: 10px;
+    }
+    
+    .volume-slider {
+      flex: 1;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    
+    .volume-level {
+      width: 60%;
+      height: 100%;
+      background: white;
+      border-radius: 10px;
+      transition: width 0.2s ease;
+    }
+    
+    /* Additional nice UI features */
+    .liked {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+    
+    .liked:hover {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    
+    /* Music visualization */
+    .visualizer {
+      display: flex;
+      align-items: flex-end;
+      height: 30px;
+      margin-top: 20px;
+    }
+    
+    .bar {
+      background: white;
+      margin-right: 2px;
+      flex: 1;
+      border-radius: 3px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="player-container">
+    <div class="album-cover">
+      <img src="piano.jpg" alt="Album Cover">
+      <div class="vinyl-disc"></div>
+      <div class="liked">♥</div>
+    </div>
+    
+    <div class="song-info">
+      <div class="song-title">Midnight Dreams</div>
+      <div class="artist-name">Cosmic Waves</div>
+    </div>
+    
+    <div class="progress-container">
+      <div class="progress-bar"></div>
+    </div>
+    
+    <div class="time-info">
+      <span>2:14</span>
+      <span>3:45</span>
+    </div>
+    
+    <div class="controls">
+      <div class="control-btn">⏮</div>
+      <div class="control-btn">⏪</div>
+      <div class="control-btn play-btn">▶</div>
+      <div class="control-btn">⏩</div>
+      <div class="control-btn">⏭</div>
+    </div>
+    
+    <div class="volume-container">
+      <div class="volume-icon">🔊</div>
+      <div class="volume-slider">
+        <div class="volume-level"></div>
+      </div>
+    </div>
+    
+    <div class="visualizer">
+      <div class="bar" style="height: 60%;"></div>
+      <div class="bar" style="height: 30%;"></div>
+      <div class="bar" style="height: 80%;"></div>
+      <div class="bar" style="height: 40%;"></div>
+      <div class="bar" style="height: 70%;"></div>
+      <div class="bar" style="height: 50%;"></div>
+      <div class="bar" style="height: 90%;"></div>
+      <div class="bar" style="height: 30%;"></div>
+      <div class="bar" style="height: 60%;"></div>
+      <div class="bar" style="height: 20%;"></div>
+      <div class="bar" style="height: 50%;"></div>
+      <div class="bar" style="height: 40%;"></div>
+      <div class="bar" style="height: 80%;"></div>
+      <div class="bar" style="height: 60%;"></div>
+      <div class="bar" style="height: 30%;"></div>
+      <div class="bar" style="height: 70%;"></div>
+      <div class="bar" style="height: 40%;"></div>
+      <div class="bar" style="height: 20%;"></div>
+      <div class="bar" style="height: 50%;"></div>
+      <div class="bar" style="height: 30%;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Add some simple interactivity
+    const playBtn = document.querySelector('.play-btn');
+    const progressBar = document.querySelector('.progress-bar');
+    const volumeLevel = document.querySelector('.volume-level');
+    const liked = document.querySelector('.liked');
+    const bars = document.querySelectorAll('.bar');
+    
+    // Toggle play/pause
+    let isPlaying = false;
+    playBtn.addEventListener('click', function() {
+      isPlaying = !isPlaying;
+      if (isPlaying) {
+        playBtn.innerHTML = '⏸';
+        animateBars();
+      } else {
+        playBtn.innerHTML = '▶';
+        stopBarAnimation();
+      }
+    });
+    
+    // Click on progress bar
+    document.querySelector('.progress-container').addEventListener('click', function(e) {
+      const width = this.clientWidth;
+      const clickX = e.offsetX;
+      const percentage = (clickX / width) * 100;
+      progressBar.style.width = percentage + '%';
+    });
+    
+    // Click on volume slider
+    document.querySelector('.volume-slider').addEventListener('click', function(e) {
+      const width = this.clientWidth;
+      const clickX = e.offsetX;
+      const percentage = (clickX / width) * 100;
+      volumeLevel.style.width = percentage + '%';
+    });
+    
+    // Toggle like
+    liked.addEventListener('click', function() {
+      this.style.color = this.style.color === 'red' ? 'white' : 'red';
+      this.style.opacity = this.style.color === 'red' ? '1' : '0.5';
+    });
+    
+    // Animate bars
+    function animateBars() {
+      barInterval = setInterval(() => {
+        bars.forEach(bar => {
+          const height = Math.floor(Math.random() * 100) + '%';
+          bar.style.height = height;
+        });
+      }, 100);
+    }
+    
+    function stopBarAnimation() {
+      clearInterval(barInterval);
+      bars.forEach(bar => {
+        bar.style.height = '10%';
+      });
+    }
+  </script>
+</body>
+</html>
